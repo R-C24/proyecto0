@@ -1,0 +1,5 @@
+begin
+    x := 10;
+    read(a, b); - Esto es un comentario
+    resultado := a -- b + 5;
+end
