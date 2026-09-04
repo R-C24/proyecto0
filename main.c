@@ -6,6 +6,7 @@
 
 int maxTemp = 0;
 int hayError = 0;
+NodoTrie* raiz = NULL;
 
 //--------------------------------------------
 
@@ -14,6 +15,12 @@ int main(int argc, char *argv[]) {
     if (argc < 2) {
         fprintf(stderr, "Error: Se requiere un archivo fuente .micro.\n");
         fprintf(stderr, "Uso: %s <ruta_al_archivo.micro>\n", argv[0]);
+        return EXIT_FAILURE;
+    }
+
+    raiz = crearNodo('\0');
+    if (raiz == NULL) {
+        fprintf(stderr, "Error fatal: No se pudo asignar memoria para el Trie.\n");
         return EXIT_FAILURE;
     }
 
@@ -37,6 +44,8 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
+    tokenActual = scanner();
+
     systemGoal();
 
     fclose(archivo);
@@ -48,7 +57,7 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    char command[1024];
+    char command[2048];
     snprintf(command, sizeof(command), "gcc -m32 -no-pie \"%s\" -o \"%s\"", direccionASM, direccionExec);
 
     int estadoCompilacion = system(command);
@@ -188,7 +197,7 @@ int readChar() {
 }
 
 int eof() {
-    return (inspect(archivo) == EOF);
+    return (inspect() == EOF);
 }
 
 void bufferChar(int c) {
@@ -230,25 +239,23 @@ Token checkReserved() {
 
 Token scanner() {
     clearBuffer();
-    if (eof(archivo)) {
-        return EofSym;
-    } else {
-        while (!eof(archivo)) {
-            int currentChar = readChar(archivo);
+    while (!eof()) {
+        int currentChar = readChar();
+        fprintf(stderr, "Debug: '%c'\n", currentChar);
             if (isspace(currentChar)) {
                 continue;
             }
             if (isalpha(currentChar)) {
                 bufferChar(currentChar);
-                while (isalnum(inspect(archivo)) || inspect(archivo) == '_') { // REVISAR si los identificadores permiten números.
-                    bufferChar(readChar(archivo));
+                while (isalnum(inspect()) || inspect() == '_') { // REVISAR si los identificadores permiten números.
+                    bufferChar(readChar());
                 }
                 return checkReserved();
             }
             if (isdigit(currentChar)) {
                 bufferChar(currentChar);
-                while (isdigit(inspect(archivo))) {
-                    bufferChar(readChar(archivo));
+                while (isdigit(inspect())) {
+                    bufferChar(readChar());
                 }
                 return IntLiteral;
             }
@@ -264,24 +271,21 @@ Token scanner() {
                 case '+':
                     return PlusOp;
                 case ':':
-                    if (inspect(archivo) == '=') {
-                        advance(archivo);
+                    if (inspect() == '=') {
+                        advance();
                         return AssignOp;
                     } else {
-                        fprintf(stderr, "Error léxico: Carácter no reconocido '%c'\n", inspect(archivo));
+                        fprintf(stderr, "Error léxico: Carácter no reconocido '%c'\n", currentChar);
                         hayError = 1;
                         continue;
                     }
-
                 case '-':
-                    if (inspect(archivo) == '-') {
-                        advance(archivo);
+                    if (inspect() == '-') {
+                        advance();
                         return MinusOp;
                     } else {
-                        int c = readChar(archivo);
-                        while (c != '\n' && c != EOF) {
-                            c = readChar(archivo);
-                        }
+                        int c;
+                        while ((c = readChar()) != '\n' && c != EOF) {}
                         continue;
                     }
                 default:
@@ -291,7 +295,6 @@ Token scanner() {
             }
         }
         return EofSym;
-    }
 }
 
 
@@ -300,7 +303,7 @@ void match(Token token) {
     if (tokenActual == token) {
         tokenActual = scanner();
     } else {
-        fprintf(stderr, "Error sintáctico: El token no '%d' no corresponde a la gramática.", tokenActual);
+        fprintf(stderr, "Error sintáctico: El token '%d' no corresponde a la gramática.", tokenActual);
         exit(EXIT_FAILURE);
     }
 }
@@ -310,8 +313,8 @@ void systemGoal() {
 }
 
 void program() {
-    match(BeginSym);
     start();
+    match(BeginSym);
     statementList();
     match(EndSym);
     finish();
@@ -382,7 +385,7 @@ void exprList() {
 
 ExprRec expression() {
     ExprRec leftOp = primary();
-    if (tokenActual == PlusOp || tokenActual == MinusOp) { // REVISAR!!!
+    while (tokenActual == PlusOp || tokenActual == MinusOp) { // REVISAR!!!
         OpRec op = addOp();
 
         ExprRec rightOp = primary();
@@ -444,7 +447,7 @@ char* getTemp() {
     maxTemp ++;
     static char tempName[33];
     snprintf(tempName, sizeof(tempName), "Temp&%d", maxTemp); // Revisar &
-    checkId(raiz, tempName);
+    checkId(tempName);
     return tempName;
 }
 
@@ -532,7 +535,7 @@ ExprRec genInfix(ExprRec e1, OpRec op, ExprRec e2) {
     return res;
 }
 
-void start(FILE* archivoASM) {
+void start() {
     resetTemp();
 
     fprintf(archivoASM, ".section .data\n");
@@ -548,7 +551,7 @@ void start(FILE* archivoASM) {
     generate("movl", "%esp", "%ebp", NULL);
 }
 
-void finish(FILE* archivoASM) {
+void finish() {
     generate("movl", "$0", "%eax", NULL);
     generate("movl", "%ebp", "%esp", NULL);
     generate("popl", "%ebp", NULL, NULL);

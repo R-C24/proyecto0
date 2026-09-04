@@ -27,7 +27,7 @@ extern NodoTrie* raiz; //ECHARLE UN OJO
 NodoTrie* crearNodo(char letra);
 NodoTrie* enter(char* palabra);
 int lookUp(char* palabra);
-Info* checkId(NodoTrie* raiz, char* palabra);
+Info* checkId(char* palabra);
 
 int obtenerPos(char c);
 
