@@ -44,25 +44,9 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-
-    fprintf(stderr, "Ya va para el scanner\n");
-
-
     tokenActual = scanner();
 
-
-
-    fprintf(stderr, "Llegó del scanner y va para systemGoal\n");
-
-
-
     systemGoal();
-
-
-
-    fprintf(stderr, "Llegó de systemGoal\n");
-
-
 
     fclose(archivo);
     fclose(archivoASM);
@@ -72,52 +56,23 @@ int main(int argc, char *argv[])
         remove(direccionASM);
         return EXIT_FAILURE;
     }
-
-
-
-    fprintf(stderr, "Sigue sin morir antes del command\n");
-
-
-
+    
     char command[2048];
     //snprintf(command, sizeof(command), "gcc -m32 -no-pie \"%s\" -o \"%s\"", direccionASM, direccionExec);
     snprintf(command, sizeof(command), "gcc -no-pie \"%s\" -o \"%s\"", direccionASM, direccionExec);
 
-
-
-    fprintf(stderr, "Sigue sin morir antes de estadoCompilación\n");
-
-
-
+    
     int estadoCompilacion = system(command);
     if (estadoCompilacion != 0) {
         fprintf(stderr, "Error durante la compilación del archivo .s con GCC.\n");
         return EXIT_FAILURE;
     }
-
-
-
-    fprintf(stderr, "Sigue sin morir antes de exec_status\n");
-
-
-
+    
     snprintf(command, sizeof(command), "./\"%s\"", direccionExec);
-
-
-
-
-    fprintf(stderr, "Justo antes de exec_status");
-
 
 
     int exec_status = system(command);
 
-
-
-    fprintf(stderr, "Llegó hasta después de system(command)");
-
-
-    
     return exec_status == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
@@ -730,7 +685,7 @@ void writeExpr(ExprRec outExpr) {
 }
 
 void writeExpr(ExprRec outExpr) {
-    char valStr[34];
+    char valStr[33];
     extractExpr(outExpr, valStr, sizeof(valStr));
 
     generate("leaq", "fmt_out(%rip)", "%rdi", NULL);
@@ -742,4 +697,7 @@ void writeExpr(ExprRec outExpr) {
     }
     generate("movl", "$0", "%eax", NULL);
     generate("call", "printf", NULL, NULL);
+
+    generate("movl", "$0", "%edi", NULL);
+    generate("call", "fflush", NULL, NULL);
 }
