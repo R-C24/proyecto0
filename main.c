@@ -10,8 +10,8 @@ NodoTrie* raiz = NULL;
 
 //--------------------------------------------
 
-int main(int argc, char *argv[]) {
-
+int main(int argc, char *argv[])
+{
     if (argc < 2) {
         fprintf(stderr, "Error: Se requiere un archivo fuente .micro.\n");
         fprintf(stderr, "Uso: %s <ruta_al_archivo.micro>\n", argv[0]);
@@ -44,9 +44,25 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
+
+    fprintf(stderr, "Ya va para el scanner\n");
+
+
     tokenActual = scanner();
 
+
+
+    fprintf(stderr, "Llegó del scanner y va para systemGoal\n");
+
+
+
     systemGoal();
+
+
+
+    fprintf(stderr, "Llegó de systemGoal\n");
+
+
 
     fclose(archivo);
     fclose(archivoASM);
@@ -57,8 +73,21 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
+
+
+    fprintf(stderr, "Sigue sin morir antes del command\n");
+
+
+
     char command[2048];
-    snprintf(command, sizeof(command), "gcc -m32 -no-pie \"%s\" -o \"%s\"", direccionASM, direccionExec);
+    //snprintf(command, sizeof(command), "gcc -m32 -no-pie \"%s\" -o \"%s\"", direccionASM, direccionExec);
+    snprintf(command, sizeof(command), "gcc -no-pie \"%s\" -o \"%s\"", direccionASM, direccionExec);
+
+
+
+    fprintf(stderr, "Sigue sin morir antes de estadoCompilación\n");
+
+
 
     int estadoCompilacion = system(command);
     if (estadoCompilacion != 0) {
@@ -66,9 +95,29 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
+
+
+    fprintf(stderr, "Sigue sin morir antes de exec_status\n");
+
+
+
     snprintf(command, sizeof(command), "./\"%s\"", direccionExec);
+
+
+
+
+    fprintf(stderr, "Justo antes de exec_status");
+
+
+
     int exec_status = system(command);
 
+
+
+    fprintf(stderr, "Llegó hasta después de system(command)");
+
+
+    
     return exec_status == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
@@ -83,6 +132,9 @@ int obtenerPos(char c) {
     if (c == '_') {
         return 52;
     }
+    if (c >= '0' && c <= '9') {
+        return c - '0' + 53;
+    }
     return -1;
 }
 
@@ -91,6 +143,14 @@ NodoTrie* crearNodo(char letra) {
 
     if (!nodo) {
         fprintf(stderr, "Error: Memoria insuficiente.\n");
+        hayError = 1;
+
+        if (archivo){
+            fclose(archivo);
+        }
+        if (archivoASM){
+            fclose(archivoASM);
+        }
         exit(EXIT_FAILURE);
     }
 
@@ -169,7 +229,11 @@ Info* checkId(char* palabra) {
     Info* infoVar =  temp -> info;
 
     if (infoVar->enAsm == 0) {
-        generate(infoVar->nombre, ".long 0", NULL, NULL);
+        //generate(infoVar->nombre, ": .long 0", NULL, NULL);
+        //fprintf(archivoASM, "%s: .long 0\n", infoVar->nombre);
+        fprintf(archivoASM, "\n.section .data\n");
+        fprintf(archivoASM, "%s: .long 0\n", infoVar->nombre);
+        fprintf(archivoASM, ".section .text\n");
         infoVar->enAsm = 1;
     }
 
@@ -211,6 +275,14 @@ void bufferChar(int c) {
         tokenBuffer[posBuffer] = '\0';
     } else {
         fprintf(stderr, "El buffer se ha desbordado.\n");
+        hayError = 1;
+
+        if (archivo){
+            fclose(archivo);
+        }
+        if (archivoASM){
+            fclose(archivoASM);
+        }
         exit(EXIT_FAILURE);
     }
 }
@@ -241,7 +313,7 @@ Token scanner() {
     clearBuffer();
     while (!eof()) {
         int currentChar = readChar();
-        fprintf(stderr, "Debug: '%c'\n", currentChar);
+        //fprintf(stderr, "Debug: '%c'\n", currentChar);
             if (isspace(currentChar)) {
                 continue;
             }
@@ -280,14 +352,14 @@ Token scanner() {
                         continue;
                     }
                 case '-':
-                    if (inspect() == '-') {
+                    /*if (inspect() == '-') {
                         advance();
                         return MinusOp;
-                    } else {
+                    } else { */
                         int c;
                         while ((c = readChar()) != '\n' && c != EOF) {}
                         continue;
-                    }
+                    //}
                 default:
                     fprintf(stderr, "Error léxico: Carácter no reconocido '%c'\n", currentChar);
                     hayError = 1;
@@ -303,10 +375,20 @@ void match(Token token) {
     if (tokenActual == token) {
         tokenActual = scanner();
     } else {
-        fprintf(stderr, "Error sintáctico: El token '%d' no corresponde a la gramática.", tokenActual);
+        fprintf(stderr, "Error sintáctico: Se esperaba el token %d, pero se encontró %d en el buffer ('%s').\n",
+                token, tokenActual, tokenBuffer);
+        hayError = 1;
+
+        if (archivo){
+            fclose(archivo);
+        }
+        if (archivoASM){
+            fclose(archivoASM);
+        }
         exit(EXIT_FAILURE);
     }
 }
+
 void systemGoal() {
     program();
     match(EofSym);
@@ -385,7 +467,7 @@ void exprList() {
 
 ExprRec expression() {
     ExprRec leftOp = primary();
-    while (tokenActual == PlusOp || tokenActual == MinusOp) { // REVISAR!!!
+    while (tokenActual == PlusOp) { // while (tokenActual == PlusOp || tokenActual == MinusOp)
         OpRec op = addOp();
 
         ExprRec rightOp = primary();
@@ -398,14 +480,14 @@ ExprRec primary() {
     ExprRec res;
 
     switch (tokenActual) {
-        case MinusOp:
+        /*case MinusOp:
             match(MinusOp);
             ExprRec zeroRec = processLiteral("0");
             ExprRec rightRec = primary();
             OpRec subOp;
             subOp.op = MinusOp;
             res = genInfix(zeroRec, subOp, rightRec);
-            break;
+            break;*/
         case LParen:
             match(LParen);
             res = expression();
@@ -433,9 +515,9 @@ OpRec addOp() {
         case PlusOp:
             match(PlusOp);
             break;
-        case MinusOp:
+        /*case MinusOp:
             match(MinusOp);
-            break;
+            break;*/
         default:
             fprintf(stderr, "Error sintáctico: El token no '%d' no corresponde a la gramática.", tokenActual);
             exit(EXIT_FAILURE);
@@ -446,7 +528,7 @@ OpRec addOp() {
 char* getTemp() {
     maxTemp ++;
     static char tempName[33];
-    snprintf(tempName, sizeof(tempName), "Temp&%d", maxTemp); // Revisar &
+    snprintf(tempName, sizeof(tempName), "Temp_%d", maxTemp);
     checkId(tempName);
     return tempName;
 }
@@ -459,8 +541,8 @@ char* extractOp(OpRec oprec) {
     switch (oprec.op) {
         case PlusOp:
             return  "addl";
-        case MinusOp:
-            return  "subl";
+        /*case MinusOp:
+            return  "subl";*/
         default:
             return "";
     }
@@ -510,24 +592,24 @@ void generateX86(ExprRec e1, OpRec op, ExprRec e2, ExprRec res) {
 
     char* opCode = extractOp(op);
 
-    generate("movl", arg1, NULL, "%eax"); // REVISAR NULL
-    generate(opCode, arg2, NULL, "%eax");
-    generate("movl", "%eax", NULL, resName);
+    generate("movl", arg1, "%eax", NULL); // REVISAR NULL
+    generate(opCode, arg2, "%eax", NULL);
+    generate("movl", "%eax", resName, NULL);
 }
 
 void assignX86(char* obj, ExprRec fuente) {
     char temp[33];
     extractExpr(fuente, temp, sizeof(temp));
 
-    generate("movl", temp, NULL, "%eax");
-    generate("movl", "%eax", NULL, obj);
+    generate("movl", temp, "%eax", NULL);
+    generate("movl", "%eax", obj, NULL);
 }
 
 ExprRec genInfix(ExprRec e1, OpRec op, ExprRec e2) {
     ExprRec res;
     res.kind = TempExpr;
 
-    char* temp = getTemp(raiz);
+    char* temp = getTemp();
     strncpy(res.nombre, temp, sizeof(res.nombre) - 1);
     res.nombre[sizeof(res.nombre) - 1] = '\0';
 
@@ -535,7 +617,7 @@ ExprRec genInfix(ExprRec e1, OpRec op, ExprRec e2) {
     return res;
 }
 
-void start() {
+/*void start() {
     resetTemp();
 
     fprintf(archivoASM, ".section .data\n");
@@ -549,13 +631,40 @@ void start() {
 
     generate("pushl", "%ebp", NULL, NULL);
     generate("movl", "%esp", "%ebp", NULL);
+}*/
+
+void start() {
+    resetTemp();
+
+    fprintf(archivoASM, ".section .data\n");
+    fprintf(archivoASM, "    fmt_in:  .string \"%%d\"\n");
+    fprintf(archivoASM, "    fmt_out: .string \"%%d\\n\"\n");
+
+    fprintf(archivoASM, "\n.section .text\n");
+    fprintf(archivoASM, ".globl main\n");
+    fprintf(archivoASM, "main:\n");
+
+    // Prólogo x86_64
+    generate("pushq", "%rbp", NULL, NULL);
+    generate("movq", "%rsp", "%rbp", NULL);
 }
 
+/*
 void finish() {
     generate("movl", "$0", "%eax", NULL);
     generate("movl", "%ebp", "%esp", NULL);
     generate("popl", "%ebp", NULL, NULL);
     generate("ret", "", "", "");
+}*/
+
+void finish() {
+    // Epílogo x86_64
+    generate("movl", "$0", "%eax", NULL);
+    generate("movq", "%rbp", "%rsp", NULL);
+    generate("popq", "%rbp", NULL, NULL);
+    generate("ret", "", "", "");
+
+    fprintf(archivoASM, "\n.section .note.GNU-stack,\"\",@progbits\n");
 }
 
 ExprRec processId(char* lexema) {
@@ -579,6 +688,7 @@ ExprRec processLiteral(char* lexema) {
     return e;
 }
 
+/*
 void readId(ExprRec inVar) {
     char varStr[33];
     extractExpr(inVar, varStr, sizeof(varStr));
@@ -605,4 +715,31 @@ void writeExpr(ExprRec outExpr) {
     generate("pushl", "$fmt_out", NULL, NULL);
     generate("call", "printf", NULL, NULL);
     generate("addl", "$8", "%esp", NULL);
+}
+ */
+
+ void readId(ExprRec inVar) {
+    char varStr[33];
+    extractExpr(inVar, varStr, sizeof(varStr));
+
+    // rdi = formato, rsi = dirección de la variable
+    generate("leaq", "fmt_in(%rip)", "%rdi", NULL);
+    generate("leaq", varStr, "%rsi", NULL);
+    generate("movl", "$0", "%eax", NULL); // 0 registros vectoriales usados
+    generate("call", "scanf", NULL, NULL);
+}
+
+void writeExpr(ExprRec outExpr) {
+    char valStr[34];
+    extractExpr(outExpr, valStr, sizeof(valStr));
+
+    generate("leaq", "fmt_out(%rip)", "%rdi", NULL);
+    if (outExpr.kind == LiteralExpr) {
+        generate("movl", valStr, "%esi", NULL);
+    } else {
+        generate("movl", valStr, "%eax", NULL);
+        generate("movl", "%eax", "%esi", NULL);
+    }
+    generate("movl", "$0", "%eax", NULL);
+    generate("call", "printf", NULL, NULL);
 }

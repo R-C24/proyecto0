@@ -33,7 +33,7 @@ int obtenerPos(char c);
 
 
 typedef enum {BeginSym, EndSym, ReadSym, WriteSym, Id, IntLiteral, LParen,
-    RParen, SemiColon, Comma, AssignOp, PlusOp, MinusOp, EofSym} Token;
+    RParen, SemiColon, Comma, AssignOp, PlusOp, MinusOp, EofSym} Token; //
 
 Token tokenActual;
 FILE *archivo;
