@@ -31,6 +31,8 @@ Info* checkId(char* palabra);
 
 int obtenerPos(char c);
 
+void generarData(NodoTrie* nodo);
+
 
 typedef enum {BeginSym, EndSym, ReadSym, WriteSym, Id, IntLiteral, LParen,
     RParen, SemiColon, Comma, AssignOp, PlusOp, MinusOp, EofSym} Token; //
@@ -78,7 +80,7 @@ void statementList();
 void statement();
 void idList();
 void exprList();
-ExprRec expression(); // FILE* archivo, FILE* archivoASM, NodoTrie* raiz
+ExprRec expression();
 ExprRec primary();
 OpRec addOp();
 void systemGoal();

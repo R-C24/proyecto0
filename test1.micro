@@ -1,6 +1,5 @@
-- Este es un comentario valido con un solo guion
+- Este es un comentario 
 begin
-    - Declaracion implicita y asignacion simple
     a := 5;
     b := 10 + a;
 

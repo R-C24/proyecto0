@@ -1,6 +1,4 @@
-- =========================================================
-- PRUEBA DE INTEGRACION COMPLETA - COMPILADOR MICRO
-- =========================================================
+- PRUEBA GRANDOTA
 
 begin
     - 1. Lectura e inicializacion de datos basicos
@@ -35,4 +33,4 @@ begin
 
     write(totalFinal);
 end
-- Comentario de fin de archivo sin salto de linea
+- Comentario de fin de archivo

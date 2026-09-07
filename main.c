@@ -190,11 +190,6 @@ Info* checkId(char* palabra) {
     Info* infoVar =  temp -> info;
 
     if (infoVar->enAsm == 0) {
-        //generate(infoVar->nombre, ": .long 0", NULL, NULL);
-        //fprintf(archivoASM, "%s: .long 0\n", infoVar->nombre);
-        fprintf(archivoASM, "\n.section .data\n");
-        fprintf(archivoASM, "%s: .long 0\n", infoVar->nombre);
-        fprintf(archivoASM, ".section .text\n");
         infoVar->enAsm = 1;
     }
 
@@ -609,20 +604,15 @@ void start() {
     generate("movq", "%rsp", "%rbp", NULL);
 }
 
-/*
-void finish() {
-    generate("movl", "$0", "%eax", NULL);
-    generate("movl", "%ebp", "%esp", NULL);
-    generate("popl", "%ebp", NULL, NULL);
-    generate("ret", "", "", "");
-}*/
-
 void finish() {
     // Epílogo x86_64
     generate("movl", "$0", "%eax", NULL);
     generate("movq", "%rbp", "%rsp", NULL);
     generate("popq", "%rbp", NULL, NULL);
     generate("ret", "", "", "");
+
+    fprintf(archivoASM, "\n.section .data\n");
+    generarData(raiz);
 
     fprintf(archivoASM, "\n.section .note.GNU-stack,\"\",@progbits\n");
 }
@@ -705,4 +695,16 @@ void writeExpr(ExprRec outExpr) {
 
     generate("movl", "$0", "%edi", NULL);
     generate("call", "fflush", NULL, NULL);
+}
+
+void generarData(NodoTrie* nodo) {
+    if (nodo->terminal && nodo->info != NULL) {
+        fprintf(archivoASM, "    %s: .long 0\n", nodo->info->nombre);
+    }
+
+    for (int i = 0; i < N; i++) {
+        if (nodo->hijos[i] != NULL) {
+            generarData(nodo->hijos[i]);
+        }
+    }
 }
