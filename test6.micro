@@ -1,0 +1,38 @@
+- =========================================================
+- PRUEBA DE INTEGRACION COMPLETA - COMPILADOR MICRO
+- =========================================================
+
+begin
+    - 1. Lectura e inicializacion de datos basicos
+    read(a, b);
+
+    - 2. Asignaciones con expresiones simples y constantes
+    cte1 := 10;
+    cte2 := 20;
+    cte3 := 30;
+
+    - 3. Sumas encadenadas con variables y literales
+    sumaBasica := a + b;
+    sumaAcumulada := sumaBasica + cte1 + cte2 + cte3 + 100;
+
+    - 4. Identificador de exactamente 32 caracteres
+    - 12345678901234567890123456789012
+    variableConExactamente32Chars012 := sumaAcumulada + 50;
+
+    - 5. Uso del identificador largo en una operacion posterior
+    resultadoIntermedio := variableConExactamente32Chars012 + a + b;
+
+    - 6. Reutilizacion y actualizacion de variables existentes
+    a := resultadoIntermedio + cte1;
+    b := a + variableConExactamente32Chars012 + 1;
+
+    - 7. Operaciones de salida multiples
+    write(a, b);
+    write(resultadoIntermedio, variableConExactamente32Chars012);
+
+    - 8. Bloque final de calculo con reasignaciones
+    totalFinal := a + b + resultadoIntermedio + sumaAcumulada + 500;
+
+    write(totalFinal);
+end
+- Comentario de fin de archivo sin salto de linea
