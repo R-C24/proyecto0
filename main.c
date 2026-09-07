@@ -8,7 +8,6 @@ int maxTemp = 0;
 int hayError = 0;
 NodoTrie* raiz = NULL;
 
-//--------------------------------------------
 
 int main(int argc, char *argv[])
 {
@@ -76,6 +75,8 @@ int main(int argc, char *argv[])
     return exec_status == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
+//----------- Tries -----------
+
 int obtenerPos(char c) {
     if (c >= 'a' && c <= 'z') {
         return c - 'a';
@@ -93,8 +94,9 @@ int obtenerPos(char c) {
     return -1;
 }
 
+
 NodoTrie* crearNodo(char letra) {
-    NodoTrie* nodo = (NodoTrie*) malloc (sizeof(NodoTrie)); //SI FALLA, ES PORQUE ERA CALLOC
+    NodoTrie* nodo = (NodoTrie*) malloc (sizeof(NodoTrie)); 
 
     if (!nodo) {
         fprintf(stderr, "Error: Memoria insuficiente.\n");
@@ -159,6 +161,10 @@ int lookUp(char* palabra) {
     }
     return 0;
 }
+
+//-----------------------------
+
+
 
 Info* checkId(char* palabra) {
     if (strlen(palabra) > 32) {

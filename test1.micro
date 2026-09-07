@@ -1,0 +1,15 @@
+- Este es un comentario valido con un solo guion
+begin
+    - Declaracion implicita y asignacion simple
+    a := 5;
+    b := 10 + a;
+
+    - Sumas encadenadas
+    resultado := a + b + 100;
+
+    - Identificador con exactamente 32 caracteres (DEBE SER VALIDO)
+    identificadorDeTreintaYDosChar32 := resultado + 1;
+
+    - Reutilizacion del identificador de 32 caracteres
+    sumaTotal := identificadorDeTreintaYDosChar32 + a;
+end

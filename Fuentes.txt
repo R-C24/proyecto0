@@ -1,0 +1,9 @@
+[1] OdeN, «Tries: Concepto y aplicaciones básicas», YouTube. 19 de noviembre de 2020. [En línea]. Disponible en: https://www.youtube.com/watch?v=Kt6ZAdKWMm4
+
+[2] «Makefile Tutorial by Example», Makefile Tutorial. https://makefiletutoria
+
+[3] «Trie Data Structure in C/C++ | DigitalOcean». https://www-digitalocean-com.translate.goog/community/tutorials/trie-data-structure-in-c-plus-plus?_x_tr_sl=en&_x_tr_tl=es&_x_tr_hl=es&_x_tr_pto=tc&_x_tr_hist=true
+
+[4] Jacob Sorber, «The trie data structure (Prefix tree)», YouTube. 18 de mayo de 2021. [En línea]. Disponible en: https://www.youtube.com/watch?v=3CbFFVHQrk4
+
+[5] C. N. Fischer y R. J. LeBlanc, Crafting a Compiler. Benjamin-Cummings Publishing Company, 1988.

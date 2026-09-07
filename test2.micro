@@ -1,0 +1,13 @@
+- Archivo para verificar el rechazo de operadores no permitidos
+begin
+    a := 10;
+
+    - ERROR 1: Operacion de resta / numero negativo (No permitido)
+    b := a - 5;
+
+    - ERROR 2: Asignacion con valor negativo (No permitido)
+    c := -10;
+
+    - ERROR 3: Identificador de 33 caracteres (Supera el limite de 32)
+    identificadorDeTreintaYTresChars33 := 1;
+end

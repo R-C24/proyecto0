@@ -1,0 +1,4 @@
+begin
+    a := 5;
+end
+- Comentario final sin enter al terminar el archivo
