@@ -170,7 +170,7 @@ Info* checkId(char* palabra) {
     if (strlen(palabra) > 32) {
         fprintf(stderr, "Aviso: El identificador '%s' supera los 32 caracteres y será truncado.\n", palabra);
     }
-    char palabra32[33];
+    char palabra32[34];
     strncpy(palabra32, palabra, 32);
     palabra32[32] = '\0';
 
@@ -280,7 +280,7 @@ Token scanner() {
             }
             if (isalpha(currentChar)) {
                 bufferChar(currentChar);
-                while (isalnum(inspect()) || inspect() == '_') { // REVISAR si los identificadores permiten números.
+                while (isalnum(inspect()) || inspect() == '_') {
                     bufferChar(readChar());
                 }
                 return checkReserved();
@@ -488,7 +488,7 @@ OpRec addOp() {
 
 char* getTemp() {
     maxTemp ++;
-    static char tempName[33];
+    static char tempName[34];
     snprintf(tempName, sizeof(tempName), "Temp_%d", maxTemp);
     checkId(tempName);
     return tempName;
@@ -543,9 +543,9 @@ void generate(char* opcode, char* arg1, char* arg2, char* res) {
 }
 
 void generateX86(ExprRec e1, OpRec op, ExprRec e2, ExprRec res) {
-    char arg1[33];
-    char arg2[33];
-    char resName[33];
+    char arg1[34];
+    char arg2[34];
+    char resName[34];
 
     extractExpr(e1, arg1, sizeof(arg1));
     extractExpr(e2, arg2, sizeof(arg2));
@@ -553,13 +553,13 @@ void generateX86(ExprRec e1, OpRec op, ExprRec e2, ExprRec res) {
 
     char* opCode = extractOp(op);
 
-    generate("movl", arg1, "%eax", NULL); // REVISAR NULL
+    generate("movl", arg1, "%eax", NULL);
     generate(opCode, arg2, "%eax", NULL);
     generate("movl", "%eax", resName, NULL);
 }
 
 void assignX86(char* obj, ExprRec fuente) {
-    char temp[33];
+    char temp[34];
     extractExpr(fuente, temp, sizeof(temp));
 
     generate("movl", temp, "%eax", NULL);
@@ -584,7 +584,6 @@ ExprRec genInfix(ExprRec e1, OpRec op, ExprRec e2) {
     fprintf(archivoASM, ".section .data\n");
     fprintf(archivoASM, "    fmt_in:  .string \"%%d\"\n");
     fprintf(archivoASM, "    fmt_out: .string \"%%d\\n\"\n");
-    // Revisar process variable
 
     fprintf(archivoASM, "\n.section .text\n");
     fprintf(archivoASM, ".globl main\n");
@@ -680,7 +679,7 @@ void writeExpr(ExprRec outExpr) {
  */
 
  void readId(ExprRec inVar) {
-    char varStr[33];
+    char varStr[34];
     extractExpr(inVar, varStr, sizeof(varStr));
 
     // rdi = formato, rsi = dirección de la variable
@@ -691,7 +690,7 @@ void writeExpr(ExprRec outExpr) {
 }
 
 void writeExpr(ExprRec outExpr) {
-    char valStr[33];
+    char valStr[34];
     extractExpr(outExpr, valStr, sizeof(valStr));
 
     generate("leaq", "fmt_out(%rip)", "%rdi", NULL);

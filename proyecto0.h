@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-#define N 53
+#define N 63
 #define tamBuffer 1024
 
 typedef struct Info Info;

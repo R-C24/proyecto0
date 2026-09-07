@@ -10,4 +10,6 @@ begin
 
     - ERROR 3: Identificador de 33 caracteres (Supera el limite de 32)
     identificadorDeTreintaYTresChars33 := 1;
+
+    write(identificadorDeTreintaYTresChars33);
 end
