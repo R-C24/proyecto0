@@ -9,8 +9,9 @@ int hayError = 0;
 NodoTrie* raiz = NULL;
 
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]){
+
+// Se recibe los argumentos, se maneja la apertura de archivos y se llama al parser.
     if (argc < 2) {
         fprintf(stderr, "Error: Se requiere un archivo fuente .micro.\n");
         fprintf(stderr, "Uso: %s <ruta_al_archivo.micro>\n", argv[0]);
@@ -50,17 +51,18 @@ int main(int argc, char *argv[])
     fclose(archivo);
     fclose(archivoASM);
 
+    // Si hubo algún error, se aborta la escritura del archivo ensamblador.
+
     if (hayError) {
         fprintf(stderr, "Se ha detenido la compilación debido a errores en el programa fuente.\n");
         remove(direccionASM);
         return EXIT_FAILURE;
     }
-    
+
+    // Se define el comando de ejecución.
     char command[2048];
-    //snprintf(command, sizeof(command), "gcc -m32 -no-pie \"%s\" -o \"%s\"", direccionASM, direccionExec);
     snprintf(command, sizeof(command), "gcc -no-pie \"%s\" -o \"%s\"", direccionASM, direccionExec);
 
-    
     int estadoCompilacion = system(command);
     if (estadoCompilacion != 0) {
         fprintf(stderr, "Error durante la compilación del archivo .s con GCC.\n");
@@ -69,7 +71,6 @@ int main(int argc, char *argv[])
     
     snprintf(command, sizeof(command), "./\"%s\"", direccionExec);
 
-
     int exec_status = system(command);
 
     return exec_status == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
@@ -77,6 +78,7 @@ int main(int argc, char *argv[])
 
 //----------- Tries -----------
 
+// Obtiene el índice de un caracter en el trie.
 int obtenerPos(char c) {
     if (c >= 'a' && c <= 'z') {
         return c - 'a';
@@ -94,7 +96,7 @@ int obtenerPos(char c) {
     return -1;
 }
 
-
+// Se encarga de la creación de nodos.
 NodoTrie* crearNodo(char letra) {
     NodoTrie* nodo = (NodoTrie*) malloc (sizeof(NodoTrie)); 
 
@@ -120,6 +122,7 @@ NodoTrie* crearNodo(char letra) {
     return nodo;
 }
 
+// Maneja la inserción de un identificador en el trie.
 NodoTrie* enter(char* palabra) {
     NodoTrie* temp = raiz;
 
@@ -146,6 +149,7 @@ NodoTrie* enter(char* palabra) {
     return raiz;
 }
 
+// Maneja la búsqueda de un identificador en el trie.
 int lookUp(char* palabra) {
     NodoTrie* temp = raiz;
 
@@ -165,7 +169,8 @@ int lookUp(char* palabra) {
 //-----------------------------
 
 
-
+// Se encarga de revisar que el identificador no supere los 32 caracteres (y, en caso de que no cumpla con esto, lo recorta).
+// Si el identificador no existe dentro del trie, lo manda a insertar. Si existe, lo manda a buscar.
 Info* checkId(char* palabra) {
     if (strlen(palabra) > 32) {
         fprintf(stderr, "Aviso: El identificador '%s' supera los 32 caracteres y será truncado.\n", palabra);
@@ -196,8 +201,7 @@ Info* checkId(char* palabra) {
     return infoVar;
 }
 
-//--------------------------------------------
-
+// Nos permite ver el siguiente caracter.
 int inspect() {
     int c = fgetc(archivo);
     if (c != EOF) {
@@ -206,20 +210,24 @@ int inspect() {
     return c;
 }
 
+// Se mueve hacia el siguiente caracter.
 void advance() {
     if (!feof(archivo)) {
         fgetc(archivo);
     }
 }
 
+// Lee el siguiente caracter.
 int readChar() {
     return fgetc(archivo);
 }
 
-int eof() {
+// Revisa si el siguiente es End Of File.
+int eof(){
     return (inspect() == EOF);
 }
 
+// Guarda en el buffer.
 void bufferChar(int c) {
     if (c == EOF) {
         return;
@@ -243,11 +251,13 @@ void bufferChar(int c) {
     }
 }
 
+//Limpia el buffer.
 void clearBuffer() {
     posBuffer = 0;
     tokenBuffer[0] = '\0';
 }
 
+// Se encarga de revisar si una palabra es reservada y devuelve el Token correspondiente.
 Token checkReserved() {
 
     if (strcmp(tokenBuffer, "begin") == 0) {
@@ -265,11 +275,11 @@ Token checkReserved() {
     return Id;
 }
 
+// Maneja la lógica de cada caracter.
 Token scanner() {
     clearBuffer();
     while (!eof()) {
         int currentChar = readChar();
-        //fprintf(stderr, "Debug: '%c'\n", currentChar);
             if (isspace(currentChar)) {
                 continue;
             }
@@ -325,8 +335,7 @@ Token scanner() {
         return EofSym;
 }
 
-
-
+// Se asegura que el token recibido calce con el esperado.
 void match(Token token) {
     if (tokenActual == token) {
         tokenActual = scanner();
@@ -344,6 +353,9 @@ void match(Token token) {
         exit(EXIT_FAILURE);
     }
 }
+
+
+// Las siguientes funciones se encargan de gestionar las reglas de producción y la información semántica de la gramática definida para Micro.
 
 void systemGoal() {
     program();
@@ -481,18 +493,22 @@ OpRec addOp() {
     return o;
 }
 
+
+// Encargado del manejo de temporales.
 char* getTemp() {
-    maxTemp ++;
+    maxTemp++;
     static char tempName[34];
     snprintf(tempName, sizeof(tempName), "Temp_%d", maxTemp);
     checkId(tempName);
     return tempName;
 }
 
+// Resetea temporales.
 void resetTemp() {
     maxTemp = 0;
 }
 
+// Traduce de token a texto en el caso de operaciones.
 char* extractOp(OpRec oprec) {
     switch (oprec.op) {
         case PlusOp:
@@ -504,6 +520,7 @@ char* extractOp(OpRec oprec) {
     }
 }
 
+// Traduce de token a texto en el caso de expresiones.
 char* extractExpr(ExprRec exprRec, char* buffer, size_t tam) {
     switch (exprRec.kind) {
         case IdExpr:
@@ -522,6 +539,7 @@ char* extractExpr(ExprRec exprRec, char* buffer, size_t tam) {
     return buffer;
 }
 
+// Escribe instrucciones en x86 dependiendo de la cantidad de argumentos.
 void generate(char* opcode, char* arg1, char* arg2, char* res) {
     if (arg1 && strlen(arg1) > 0 && arg2 && strlen(arg2) > 0 && res && strlen(res) > 0) {
         fprintf(archivoASM, "    %s %s, %s, %s\n", opcode, arg1, arg2, res);
@@ -537,6 +555,7 @@ void generate(char* opcode, char* arg1, char* arg2, char* res) {
     }
 }
 
+// Función auxiliar para genInfix.
 void generateX86(ExprRec e1, OpRec op, ExprRec e2, ExprRec res) {
     char arg1[34];
     char arg2[34];
@@ -553,6 +572,7 @@ void generateX86(ExprRec e1, OpRec op, ExprRec e2, ExprRec res) {
     generate("movl", "%eax", resName, NULL);
 }
 
+// Escribe asignaciones en x86.
 void assignX86(char* obj, ExprRec fuente) {
     char temp[34];
     extractExpr(fuente, temp, sizeof(temp));
@@ -561,6 +581,7 @@ void assignX86(char* obj, ExprRec fuente) {
     generate("movl", "%eax", obj, NULL);
 }
 
+// Gestiona la generación de instrucciones en x86.
 ExprRec genInfix(ExprRec e1, OpRec op, ExprRec e2) {
     ExprRec res;
     res.kind = TempExpr;
@@ -573,21 +594,7 @@ ExprRec genInfix(ExprRec e1, OpRec op, ExprRec e2) {
     return res;
 }
 
-/*void start() {
-    resetTemp();
-
-    fprintf(archivoASM, ".section .data\n");
-    fprintf(archivoASM, "    fmt_in:  .string \"%%d\"\n");
-    fprintf(archivoASM, "    fmt_out: .string \"%%d\\n\"\n");
-
-    fprintf(archivoASM, "\n.section .text\n");
-    fprintf(archivoASM, ".globl main\n");
-    fprintf(archivoASM, "main:\n");
-
-    generate("pushl", "%ebp", NULL, NULL);
-    generate("movl", "%esp", "%ebp", NULL);
-}*/
-
+// Escribe instrucciones iniciales para un programa x86. (Prólogo)
 void start() {
     resetTemp();
 
@@ -599,13 +606,12 @@ void start() {
     fprintf(archivoASM, ".globl main\n");
     fprintf(archivoASM, "main:\n");
 
-    // Prólogo x86_64
     generate("pushq", "%rbp", NULL, NULL);
     generate("movq", "%rsp", "%rbp", NULL);
 }
 
+// Escribe instrucciones finales para un programa x86. (Epílogo)
 void finish() {
-    // Epílogo x86_64
     generate("movl", "$0", "%eax", NULL);
     generate("movq", "%rbp", "%rsp", NULL);
     generate("popq", "%rbp", NULL, NULL);
@@ -617,6 +623,7 @@ void finish() {
     fprintf(archivoASM, "\n.section .note.GNU-stack,\"\",@progbits\n");
 }
 
+// Guardamos en un exprRec el identificador.
 ExprRec processId(char* lexema) {
     ExprRec e;
     e.kind = IdExpr;
@@ -630,6 +637,7 @@ ExprRec processId(char* lexema) {
     return e;
 }
 
+// Guardamos en un exprRec el valor.
 ExprRec processLiteral(char* lexema) {
     ExprRec e;
     e.kind = LiteralExpr;
@@ -638,47 +646,18 @@ ExprRec processLiteral(char* lexema) {
     return e;
 }
 
-/*
+// Escribe comandos de lectura en ensamblador.
 void readId(ExprRec inVar) {
-    char varStr[33];
-    extractExpr(inVar, varStr, sizeof(varStr));
-
-    char argVar[34];  // Revisar si falla 35
-    snprintf(argVar, sizeof(argVar), "%s", varStr);
-    generate("pushl", argVar, NULL, NULL);
-    generate("pushl", "$fmt_in", NULL, NULL);
-    generate("call", "scanf", NULL, NULL);
-    generate("addl", "$8", "%esp", NULL);
-}
-
-void writeExpr(ExprRec outExpr) {
-    char valStr[34]; //Revisar
-    extractExpr(outExpr, valStr, sizeof(valStr));
-
-    if (outExpr.kind == LiteralExpr) {
-        generate("pushl", valStr, NULL, NULL);
-    } else {
-        generate("movl", valStr, "%eax", NULL);
-        generate("pushl", "%eax", NULL, NULL);
-    }
-
-    generate("pushl", "$fmt_out", NULL, NULL);
-    generate("call", "printf", NULL, NULL);
-    generate("addl", "$8", "%esp", NULL);
-}
- */
-
- void readId(ExprRec inVar) {
     char varStr[34];
     extractExpr(inVar, varStr, sizeof(varStr));
 
-    // rdi = formato, rsi = dirección de la variable
     generate("leaq", "fmt_in(%rip)", "%rdi", NULL);
     generate("leaq", varStr, "%rsi", NULL);
-    generate("movl", "$0", "%eax", NULL); // 0 registros vectoriales usados
+    generate("movl", "$0", "%eax", NULL);
     generate("call", "scanf", NULL, NULL);
 }
 
+// Escribe comandos de escritura en ensamblador.
 void writeExpr(ExprRec outExpr) {
     char valStr[34];
     extractExpr(outExpr, valStr, sizeof(valStr));
@@ -697,6 +676,7 @@ void writeExpr(ExprRec outExpr) {
     generate("call", "fflush", NULL, NULL);
 }
 
+// Recorre el trie para escribir en la sección .data los identificadores agrupados.
 void generarData(NodoTrie* nodo) {
     if (nodo->terminal && nodo->info != NULL) {
         fprintf(archivoASM, "    %s: .long 0\n", nodo->info->nombre);

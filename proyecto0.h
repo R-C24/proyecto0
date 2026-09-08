@@ -22,7 +22,7 @@ struct NodoTrie {
     Info* info;
 };
 
-extern NodoTrie* raiz; //ECHARLE UN OJO
+extern NodoTrie* raiz;
 
 NodoTrie* crearNodo(char letra);
 NodoTrie* enter(char* palabra);
@@ -35,7 +35,7 @@ void generarData(NodoTrie* nodo);
 
 
 typedef enum {BeginSym, EndSym, ReadSym, WriteSym, Id, IntLiteral, LParen,
-    RParen, SemiColon, Comma, AssignOp, PlusOp, MinusOp, EofSym} Token; //
+    RParen, SemiColon, Comma, AssignOp, PlusOp, MinusOp, EofSym} Token;
 
 Token tokenActual;
 FILE *archivo;
